@@ -1,0 +1,51 @@
+<% require 'pry' %>
+
+<h1>Blackjack</h1>
+
+<p>Welcome <%= session[:player_name] %></p>
+
+<p>
+  <% if @play_again %>
+    <h5>Play again?</h5>
+    <a href="/game" class='btn btn-primary'>Yes</a>
+    <a href="/game_over" class='btn'>No</a>
+    
+  <% end %>
+</p>
+
+
+<div class="well">
+  <h4>Dealer's hand:</h4>
+  <% session[:dealer_hand].each_with_index do |card, i| %>
+    <% if session[:turn] != "dealer" and i == 0 %>
+      <img src="/images/cards/cover.jpg">
+    <% else %>
+      <%= draw_card(card) %>
+    <% end %>
+  <% end %>
+  <% if @show_dealer_hit_button %>
+    <p>
+      <h5>Dealer's total hand is: <%= calc_hand(session[:dealer_hand]) %> and will hit.</h5>
+      <form action='/game/dealer/hit' method='post'>
+        <input type='submit' class='btn btn-primary' value='Click to see dealer card &rarr;'>
+      </form>
+    </p>
+  <% end %>
+</div>
+
+<div class="well">
+  <h4><%= session[:player_name] %>'s hand:</h4>
+  <% session[:player_hand].each do |card| %>
+    <%= draw_card(card) %>
+  <% end %>
+</div>
+<h5><%= session[:player_name] %>'s total hand is: <%= calc_hand(session[:player_hand]) %></h5>
+
+<% if @show_hit_or_stay_button %>
+  <form id="hit_form" action="/game/player/hit" method="post">
+    <input class="btn btn-success" type="submit" value="Hit">
+  </form>
+  <form id="stay_form" action="/game/player/stay" method="post">
+    <input class="btn btn-warning" type="submit" value="Stay">
+  </form>
+<% end %>

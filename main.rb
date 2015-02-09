@@ -15,6 +15,7 @@ VALUE = {"2" => "2", "3" => "3", "4" => "4", "5" => "5", "6" => "6", "7" => "7",
             "9" => "9", "10" => "10", "J" => "jack", "Q" => "queen", "K" => "king", "A" => "ace"}
 BLACKJACK = 21
 DEALER_MIN_HIT = 17
+INITIAL_POT = 500
 
   def calc_hand(hand)
     total = 0
@@ -43,19 +44,21 @@ DEALER_MIN_HIT = 17
   end
 
   def winner!(msg)
-    @success = "Congratulation #{session[:player_name]}. #{msg}"
+    session[:money] += session[:bet_amount]
+    @winner = "Congratulation. #{msg} #{session[:player_name]} now has $#{session[:money]}."
     @show_hit_or_stay_button = false
     @play_again = true
   end
 
   def loser!(msg)
-    @error = "Sorry #{session[:player_name]}. #{msg}"
+    session[:money] -= session[:bet_amount]
+    @loser = "Sorry. #{msg} #{session[:player_name]} now has $#{session[:money]}."
     @show_hit_or_stay_button = false
     @play_again = true
   end
 
   def tie!(msg)
-    @success = "It's a tie. #{msg}"
+    @winner = "It's a tie. #{msg}"
     @show_hit_or_stay_button = false
     @play_again = true
   end
@@ -86,7 +89,28 @@ post '/new_game' do
   end
 
   session[:player_name] = params[:player_name]
-  redirect '/game'
+  session[:money] = INITIAL_POT
+  redirect '/bet'
+end
+
+get '/bet' do
+  erb :bet
+end
+
+post '/bet' do
+  if params[:bet_amount].nil? or params[:bet_amount].to_i == 0
+    @error = "Please make a bet."
+    halt erb :bet
+  elsif params[:bet_amount].to_i > session[:money]
+    @error = "Please make a bet that is less than #{session[:money]}."
+    halt erb :bet
+  elsif params[:bet_amount].to_i < 0
+    @error = "Please make a bet that is more than $1"
+    halt erb :bet
+  else
+    session[:bet_amount] = params[:bet_amount].to_i
+    redirect '/game'
+  end
 end
 
 get '/game' do
@@ -119,7 +143,7 @@ post '/game/player/hit' do
   elsif player_total > BLACKJACK
     loser!("#{session[:player_name]} has busted with #{player_total}.")
   end
-  erb :game
+  erb :game, layout: false
 end
 
 post '/game/player/stay' do
